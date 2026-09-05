@@ -504,7 +504,7 @@ void GennyInterface::openInstrumentImport()
 		_importInstrument->addFileExtension(CFileExtension("YM2612 Instrument", "tfi"));
 		//_importInstrument->addFileExtension(CFileExtension("YM2612 Drums", "dpack"));
 		//_importInstrument->addFileExtension(CFileExtension("GENNY Drums", "dac"));
-		_importInstrument->setDefaultExtension(CFileExtension("GENNY Instrument", "gen"));
+		//_importInstrument->setDefaultExtension(CFileExtension("GENNY Instrument", "gen"));
 		_importInstrument->setAllowMultiFileSelection(true);
 
 		_importInstrument->run([&](CNewFileSelector* s) {this->notify(s);});
