@@ -14,6 +14,9 @@
     <ClCompile Include="src\base\VSTBase.cpp">
       <Filter>base</Filter>
     </ClCompile>
+    <ClCompile Include="src\base\WinMidiOutput.cpp">
+      <Filter>base</Filter>
+    </ClCompile>
     <ClCompile Include="src\Genny2612.cpp" />
     <ClCompile Include="src\IndexBaron.cpp" />
     <ClCompile Include="src\Interface\GennyInterface.cpp">
@@ -164,6 +167,12 @@
     <ClCompile Include="src\Interface\UIMegaMidiPortSpinner.cpp">
       <Filter>Interface</Filter>
     </ClCompile>
+    <ClCompile Include="src\Interface\UIGenMDMPortSpinner.cpp">
+      <Filter>Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Interface\UIGenMDMDeviceSelector.cpp">
+      <Filter>Interface</Filter>
+    </ClCompile>
     <ClCompile Include="src\gzip\gzlib.c">
       <Filter>zip</Filter>
     </ClCompile>
@@ -258,6 +267,9 @@
       <Filter>YM2612\resampler</Filter>
     </ClInclude>
     <ClInclude Include="src\base\VSTBase.h">
+      <Filter>base</Filter>
+    </ClInclude>
+    <ClInclude Include="src\base\WinMidiOutput.h">
       <Filter>base</Filter>
     </ClInclude>
     <ClInclude Include="src\Genny2612.h" />
@@ -440,6 +452,12 @@
       <Filter>Interface</Filter>
     </ClInclude>
     <ClInclude Include="src\Interface\UIMegaMidiPortSpinner.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Interface\UIGenMDMPortSpinner.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Interface\UIGenMDMDeviceSelector.h">
       <Filter>Interface</Filter>
     </ClInclude>
     <ClInclude Include="src\gzip\gzguts.h">

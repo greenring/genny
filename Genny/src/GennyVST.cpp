@@ -7,6 +7,10 @@
 
 #include "GennyLoaders.h"
 
+#if BUILD_VST
+#include "base/WinMidiOutput.h"
+#endif
+
 #ifdef BUILD_VST
 AudioEffect* createEffectInstance (audioMasterCallback audioMaster)
 {
@@ -34,7 +38,7 @@ GennyVST::GennyVST(void) :
 	_switchingPreset(false),
 	megaMidiPort(0),
 	megaMidiVSTMute(false),
-	genMDMPort(7),
+	genMDMPort(0),
 	accurateEmulationMode(false),
 	triggerWave(nullptr),
 	bendRange(12),
@@ -45,7 +49,8 @@ GennyVST::GennyVST(void) :
 	_clearMidiUIUpdateHistory(false),
 	_versionTooOld(false),
 #if BUILD_VST
-	_setParameterNormalizedValue(true)
+	_setParameterNormalizedValue(true),
+	_genMDMDirectOut(nullptr)
 #else
 	_setParameterNormalizedValue(false)
 #endif
@@ -87,8 +92,43 @@ void GennyVST::destroy()
 		_core = nullptr;
 	}
 
-
+#if BUILD_VST
+	if (_genMDMDirectOut != nullptr)
+	{
+		delete _genMDMDirectOut;
+		_genMDMDirectOut = nullptr;
+	}
+#endif
 }
+
+#if BUILD_VST
+std::vector<std::string> GennyVST::getGenMDMDeviceNames()
+{
+	return WinMidiOutput::enumerateDeviceNames();
+}
+
+void GennyVST::setGenMDMDevice(const std::string& deviceName)
+{
+	genMDMDeviceName = deviceName;
+
+	if (_genMDMDirectOut == nullptr)
+		_genMDMDirectOut = new WinMidiOutput();
+
+	if (deviceName.empty())
+		_genMDMDirectOut->close();
+	else
+		_genMDMDirectOut->open(deviceName);
+}
+
+void GennyVST::sendGenMDMDirect(unsigned char status, unsigned char data1, unsigned char data2)
+{
+	if (_genMDMDirectOut == nullptr && !genMDMDeviceName.empty())
+		setGenMDMDevice(genMDMDeviceName);
+
+	if (_genMDMDirectOut != nullptr && _genMDMDirectOut->isOpen())
+		_genMDMDirectOut->sendShortMessage(status, data1, data2);
+}
+#endif
 
 void GennyVST::initialize()
 {
@@ -338,6 +378,16 @@ int GennyVST::getPluginState (void** data, bool isPreset)
 			written += 4;
 		}
 	}
+
+	stream.write((char*)&genMDMPort, 1);
+	written += 1;
+
+	unsigned short genMDMDeviceNameLength = (unsigned short)genMDMDeviceName.length();
+	stream.write((char*)&genMDMDeviceNameLength, 2);
+	written += 2;
+
+	stream.write(genMDMDeviceName.c_str(), genMDMDeviceNameLength + 1);
+	written += genMDMDeviceNameLength + 1;
 
 	//Seek back to start and write filesize now that we know what it is
 	stream.seekp(0);
@@ -872,6 +922,35 @@ int GennyVST::setPluginState (void* data, int size, bool isPreset)
 			}
 		}
 	}
+
+	if (checkVersionGreaterThanOrEqualTo(versionNumber, kVersionIndicator23))
+	{
+		memcpy(&genMDMPort, &((char*)data)[readPos], 1);
+		readPos += 1;
+	}
+	else
+		genMDMPort = 0;
+
+	if (checkVersionGreaterThanOrEqualTo(versionNumber, kVersionIndicator24))
+	{
+		unsigned short genMDMDeviceNameLength = 0;
+		memcpy(&genMDMDeviceNameLength, &((char*)data)[readPos], 2);
+		readPos += 2;
+
+		char* deviceName = new char[genMDMDeviceNameLength + 1];
+		memcpy(deviceName, &((char*)data)[readPos], genMDMDeviceNameLength + 1);
+		readPos += genMDMDeviceNameLength + 1;
+
+		genMDMDeviceName = deviceName;
+		delete[] deviceName;
+
+#if BUILD_VST
+		if (genMDMPort > 0 && !genMDMDeviceName.empty())
+			setGenMDMDevice(genMDMDeviceName);
+#endif
+	}
+	else
+		genMDMDeviceName.clear();
 
 
 	if (checkVersionLessThan(versionNumber, kVersionIndicator19))

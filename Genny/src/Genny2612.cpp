@@ -1170,6 +1170,7 @@ void Genny2612::update(float** buffer, int numSamples)
 
 	_chip._hardwareMode = _owner->megaMidiPort > 0;
 	_chip._emulationMute = _owner->megaMidiPort > 0 && _owner->megaMidiVSTMute;
+	_chip._mdmMode = _owner->genMDMPort > 0;
 	_snChip._hardwareMode = _chip._hardwareMode;
 	_snChip._emulationMute = _chip._emulationMute;
 	if (_initializedChannels == false)

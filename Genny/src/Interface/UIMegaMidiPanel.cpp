@@ -8,6 +8,8 @@
 #include "UIPresetElement.h"
 #include "UIPresetsPanel.h"
 #include "UIMegaMidiPortSpinner.h"
+#include "UIGenMDMPortSpinner.h"
+#include "UIGenMDMDeviceSelector.h"
 #include "UIBendRangeSpinner.h"
 
 const int kImporkjtBankButton = 9990;
@@ -17,9 +19,14 @@ UIMegaMidiPanel::UIMegaMidiPanel(const CRect& size, UIPresetsAndInstrumentsPanel
 	_owner(owner),
 	_muteCheck(nullptr),
 	_emuCheck(nullptr),
-	_bendSelector(nullptr)
-#ifndef BUILD_VST
+	_bendSelector(nullptr),
+	_genMDMLabel(nullptr)
+#ifdef BUILD_VST
+	,_genMDMCheck(nullptr)
+	,_genMDMDeviceSelector(nullptr)
+#else
 	,_portSelector(nullptr)
+	,_genMDMPortSelector(nullptr)
 #endif
 {
 
@@ -53,11 +60,38 @@ bool UIMegaMidiPanel::attached (CView* parent)
 	_enableCheck->setValue(_vst->megaMidiPort > 0 ? 1.0f : 0.0f);
 	frame->addView(_enableCheck);
 	_views.push_back(_enableCheck);
+
+	UIBitmap genMDMButton(IDB_PNG37);
+	CRect genMDMSize = CRect(0, 0, 18, 18);
+	genMDMSize.offset(788, 282);
+	_genMDMCheck = new CCheckBox(genMDMSize, this, 0, "", genMDMButton);
+	_genMDMCheck->setValue(_vst->genMDMPort > 0 ? 1.0f : 0.0f);
+	frame->addView(_genMDMCheck);
+	_views.push_back(_genMDMCheck);
+
+	_genMDMDeviceSelector = new UIGenMDMDeviceSelector(CPoint(812, 282), this);
+	frame->addView(_genMDMDeviceSelector);
+	_views.push_back(_genMDMDeviceSelector);
 #else
 	_portSelector = new UIMegaMidiPortSpinner(CPoint(776, 258), this);
 	frame->addView(_portSelector);
 	_views.push_back(_portSelector);
+
+	_genMDMPortSelector = new UIGenMDMPortSpinner(CPoint(776, 288), this);
+	frame->addView(_genMDMPortSelector);
+	_views.push_back(_genMDMPortSelector);
 #endif
+
+	_genMDMLabel = new CTextLabel(CRect(700, 280, 786, 300), "GenMDM Out");
+	_genMDMLabel->setFont(kNormalFontBig);
+	_genMDMLabel->setHoriAlign(kRightText);
+	_genMDMLabel->getFont()->setStyle(kBoldFace);
+	_genMDMLabel->setFontColor(CColor(16, 20, 16, 255));
+	_genMDMLabel->setMouseableArea(CRect());
+	_genMDMLabel->setBackColor(CColor(0, 0, 0, 0));
+	_genMDMLabel->setFrameColor(CColor(0, 0, 0, 0));
+	frame->addView(_genMDMLabel);
+	_views.push_back(_genMDMLabel);
 
 #ifdef BUILD_VST
 	_bendSelector = new UIBendRangeSpinner(CPoint(882, 122), this);
@@ -118,6 +152,11 @@ void UIMegaMidiPanel::valueChanged (CControl* control)
 		_vst->megaMidiPort = control->getValue() > 0.5f ? 1 : 0;
 		_vst->_playingStatusChanged = true;
 	}
+	else if (control == _genMDMCheck)
+	{
+		_vst->genMDMPort = control->getValue() > 0.5f ? 1 : 0;
+		_vst->_playingStatusChanged = true;
+	}
 #endif
 }
 
@@ -134,9 +173,12 @@ void UIMegaMidiPanel::reconnect()
 
 #ifdef BUILD_VST
 	_enableCheck->setValue(_vst->megaMidiPort > 0 ? 1.0f : 0.0f);
+	_genMDMCheck->setValue(_vst->genMDMPort > 0 ? 1.0f : 0.0f);
+	_genMDMDeviceSelector->reconnect();
 	_bendSelector->reconnect();
 #else
 	_portSelector->reconnect();
+	_genMDMPortSelector->reconnect();
 #endif
 	
 	//if (((GennyPatch*)patches[selectedIndex])->InstrumentDef.Type == GIType::FM)

@@ -1,6 +1,10 @@
 #pragma once
 #include "VirtualInstrument.h"
 #include <mutex>
+#include <string>
+#include <vector>
+
+class WinMidiOutput;
 
 //long versionIndicator = nullptr //Before February 17, 2019 - Version 0.5 (no version indicator)
 const long kVersionIndicator1 = (long)593829658389673; //February 17, 2019 - Version 1.0 //OBSOLETE! NO LONGER SUPPORTED!
@@ -25,7 +29,9 @@ const long kVersionIndicator19 = 1127443264; //March 14, 2022 - changed the way 
 const long kVersionIndicator20 = 1227443200; //May 21, 2022 - increased instrument limit to 32, removed DAC path parameter
 const long kVersionIndicator21 = 1227443201; //July 14, 2024 - added legacy mode for lining up automation when loading 1.16 projects
 const long kVersionIndicator22 = 1227443202; //July 4, 2025 - stripping Instruments counts past patch 3 out of parameters to reduce max parameters and stay under 32727 (FL limit)
-const long kLatestVersion = kVersionIndicator22;
+const long kVersionIndicator23 = 1227443203; //Aug 23, 2026 - added genMDMPort saving
+const long kVersionIndicator24 = 1227443204; //Aug 23, 2026 - added genMDMDeviceName saving
+const long kLatestVersion = kVersionIndicator24;
 
 #ifndef GENNY_VERSION_STRING
 #define GENNY_VERSION_STRING "1.54"
@@ -116,6 +122,17 @@ public:
 	bool _setParameterNormalizedValue;
 	bool _loading16InstrumentMode;
 
+	std::string genMDMDeviceName;
+
+#if BUILD_VST
+	//Sends GenMDM MIDI directly to a real Windows MIDI output device, bypassing
+	//the host's own MIDI routing (needed since VST2 hosts route a plugin's
+	//generated MIDI through a single, fixed-channel track output).
+	std::vector<std::string> getGenMDMDeviceNames();
+	void setGenMDMDevice(const std::string& deviceName);
+	void sendGenMDMDirect(unsigned char status, unsigned char data1, unsigned char data2);
+#endif
+
 	bool _automationInverse;
 	char _hintString[128];
 
@@ -159,5 +176,9 @@ private:
 	bool _first;
 	bool _saving;
 	bool _switchingPreset;
+
+#if BUILD_VST
+	WinMidiOutput* _genMDMDirectOut;
+#endif
 };
 

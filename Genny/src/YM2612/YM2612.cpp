@@ -185,7 +185,7 @@ YM2612::YM2612(GennyVST* pVST)
 	, _sleep(false)
 	, _clock(YM2612Clock::YM2612_NTSC)
 	, _clockDivider(0.0f)
-	, _mdmMode(true)
+	, _mdmMode(false)
 	, _dirtyCluster(false)
 	, _currentCluster(-1)
 	, _sampleRate(44100)
@@ -416,10 +416,10 @@ void YM2612::noteOn(int note, int velocity, int channel, double* frequencyTable,
 		writeData(getRegister(YM_NOTEON, channel % 3, 0), (opEnable << 4) | (channel > 2 ? (channel + 1) : channel), channel % 3, channel);
 	}
 
-	//if (_mdmMode)
-	//{
-	//	SendMIDIGenMDM(144, channel, note / 100, min(velocity, 127));
-	//}
+	if (_mdmMode)
+	{
+		SendMIDIGenMDM(144, channel, note / 100, min(velocity, 127));
+	}
 }
 
 void YM2612::noteOnCh3Special(int note, int velocity, float vibrato, double* frequencyTable, GennyPatch* patch, bool retrigger, int operatorChannel, bool freqsOnly, bool triggerUnsetOperators)
@@ -618,8 +618,8 @@ void YM2612::noteOff(int channel, int note, bool fromMidiMessage)
 
 	writeData(getRegister(YM_NOTEON, channel % 3, 0),channel > 2 ? (channel + 1) : channel, channel % 3, channel);
 
-	//if (fromMidiMessage && _mdmMode)
-	//	SendMIDIGenMDM(128, channel, note / 100, 64);
+	if (fromMidiMessage && _mdmMode)
+		SendMIDIGenMDM(128, channel, note / 100, 64);
 	//_chip.YM2612Update(nullptr, 0);
 }
 
@@ -637,7 +637,12 @@ void YM2612::noteOff(int channel, int note, bool fromMidiMessage)
 
 void YM2612::setFromBaron(IBIndex* param, int channel, float val)
 {
-	if (channel > 5 || (channel == 5 && _dacEnable != false && _drumSet != nullptr))
+	//_dacEnable is a tri-state (-1 = not yet determined, 0 = off, 1 = on) that only
+	//resolves once a note has actually played on channel 6. Using "!= false" here
+	//treated the undetermined (-1) state as DAC-active, silently dropping every FM
+	//parameter change aimed at channel 6 until a note had played there at least
+	//once. Only skip this channel while DAC is actually confirmed on.
+	if (channel > 5 || (channel == 5 && _dacEnable == true && _drumSet != nullptr))
 		return;
 
 	if(param->getType() == IB_YMParam)
@@ -765,25 +770,53 @@ void YM2612::writeParameter(YM2612Param param, int channel, int op)
 	int reg = getRegister(param, channel % 3, op);
 	if (reg != 0)
 	{
-		//if (_mdmMode /*&& !wrote*/)
-		//{
-		//	int cc = GetGenMDMCCForParam(param, op);
-		//	if (cc >= 0)
-		//	{
-		//		unsigned char actualVal = getParameterChar(param, channel, op);
-		//		if (param == YM2612Param::YM_TL)
-		//			actualVal = 127 - actualVal;
-		//		//else if (param == YM2612Param::YM_RR)
-		//			
-		//		//if(param != YM2612Param::YM_SR)
-		//		actualVal = (int)((actualVal / (float)YM2612Param_getRange(param)) * 127);
+		if (_mdmMode)
+		{
+			int cc = GetGenMDMCCForParam(param, op);
+			if (cc >= 0)
+			{
+				auto opIt = _channels[channel].op[op].map.find(param);
+				auto chIt = _channels[channel].map.find(param);
+				YM2612HWParam* hwParam = opIt != _channels[channel].op[op].map.end() ? opIt->second :
+					(chIt != _channels[channel].map.end() ? chIt->second : nullptr);
 
-		//		//if (param == YM2612Param::YM_SR)
-		//		//	actualVal = 127 - actualVal;
+				if (hwParam != nullptr)
+				{
+					unsigned char actualVal = hwParam->val;
 
-		//		SendMIDIGenMDM(176, channel, cc, actualVal);
-		//	}
-		//}
+					//Mirrors the same LFO-disabled gate packParameter() applies when packing
+					//AMS/FMS for the real chip register - without it, a patch with LFO
+					//disabled locally would still tell the real hardware to apply modulation.
+					if ((param == YM2612Param::YM_AMS || param == YM2612Param::YM_FMS) &&
+						_channels[channel].patch != nullptr && _channels[channel].patch->InstrumentDef.LFOEnable == false)
+					{
+						actualVal = 0;
+					}
+
+					//genMDM's wire values don't uniformly mirror packParameter()'s hardware
+					//register inversions. Verified against the reference genmdm-editor's
+					//MDMDial "inverse" flags: Total Level and Sustain Level are transmitted
+					//in the same loudness-is-higher convention Genny already stores internally
+					//(no inversion), while Attack/Decay1/Release are transmitted in the raw
+					//hardware rate convention (higher = faster), which is the inverse of
+					//Genny's own "time"-flavoured internal convention for those three.
+					switch (param)
+					{
+					case YM2612Param::YM_AR:
+					case YM2612Param::YM_DR:
+					case YM2612Param::YM_RR:
+						actualVal = YM2612Param_getRange(param) - actualVal;
+						break;
+					default:
+						break;
+					}
+
+					actualVal = (unsigned char)((actualVal / (float)YM2612Param_getRange(param)) * 127);
+
+					SendMIDIGenMDM(176, channel, cc, actualVal);
+				}
+			}
+		}
 
 		unsigned char value = packParameter(param, channel, op);
 		writeData(reg, value, channel, channel);
@@ -896,7 +929,16 @@ void YM2612::SendMIDIGenMDM(int status, unsigned char chan, unsigned char cc, un
 		return;
 
 	unsigned char fullStatusVal = status | chan;
+
+#if BUILD_VST
+	//VST hosts (Ableton in particular) route a plugin's generated MIDI through a
+	//single, fixed-channel track output, which strips the per-channel addressing
+	//GenMDM needs for its 6 FM parts. Send directly to a real Windows MIDI device
+	//instead, bypassing the host's MIDI routing entirely.
+	_vst->sendGenMDMDirect(fullStatusVal, cc, data);
+#else
 	_vst->midiOut(fullStatusVal, cc, data, _vst->genMDMPort - 1);
+#endif
 }
 
 void YM2612::SendChipReset()
@@ -1263,6 +1305,7 @@ void YM2612::updateDAC()
 {
 	_hardwareMode = _vst->megaMidiPort > 0;
 	_emulationMute = _vst->megaMidiPort > 0 && _vst->megaMidiVSTMute;
+	_mdmMode = _vst->genMDMPort > 0;
 
 	if (_sleep)
 		return;
@@ -1533,6 +1576,14 @@ void YM2612::setDACEnable(bool enable)
 		_dacEnable = enable;
 		writeData(getRegister(YM_DACEN, -1, -1), _dacEnable ? 128 : 0, 0, 5);
 	}
+
+	//genMDM's own DAC-enable state for channel 6 (CC78) is entirely independent of
+	//Genny's local _dacEnable, and can be out of sync with it (e.g. if this resolved
+	//before GenMDM mode was enabled, or the hardware's own state was left over from
+	//earlier). Re-send on every call rather than only on local state changes, so it
+	//self-corrects on the next note rather than getting permanently skipped.
+	if (_mdmMode)
+		SendMIDIGenMDM(176, 5, 78, enable ? 127 : 0);
 }
 
 void YM2612::dirtyChannels(int channel)

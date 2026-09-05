@@ -4,6 +4,8 @@
 #include "UIPresetsAndInstrumentsPanel.h"
 class UIPresetElement;
 class UIMegaMidiPortSpinner;
+class UIGenMDMPortSpinner;
+class UIGenMDMDeviceSelector;
 class UIBendRangeSpinner;
 class UIMegaMidiPanel : public CControl, public IControlListener, public GennyInterfaceObject
 {
@@ -28,9 +30,13 @@ private:
 	UIPresetsAndInstrumentsPanel* _owner;
 #ifdef BUILD_VST
 	CCheckBox* _enableCheck;
+	CCheckBox* _genMDMCheck;
+	UIGenMDMDeviceSelector* _genMDMDeviceSelector;
 #else
 	UIMegaMidiPortSpinner* _portSelector;
+	UIGenMDMPortSpinner* _genMDMPortSelector;
 #endif
+	CTextLabel* _genMDMLabel;
 	UIBendRangeSpinner* _bendSelector;
 	CCheckBox* _muteCheck;
 	CCheckBox* _emuCheck;

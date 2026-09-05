@@ -62,6 +62,7 @@
     <ClCompile Include="..\VSTGui\src\vstgui\plugin-bindings\plugguieditor.cpp" />
     <ClCompile Include="..\VSTGui\src\vstgui\vstgui_win32.cpp" />
     <ClCompile Include="src\base\VSTBase.cpp" />
+    <ClCompile Include="src\base\WinMidiOutput.cpp" />
     <ClCompile Include="src\Genny2612.cpp" />
     <ClCompile Include="src\GennyExtParam.cpp" />
     <ClCompile Include="src\GennyLoaders.cpp" />
@@ -100,6 +101,8 @@
     <ClCompile Include="src\Interface\UIInstrument.cpp" />
     <ClCompile Include="src\Interface\UIKnob.cpp" />
     <ClCompile Include="src\Interface\UILetterDisplay.cpp" />
+    <ClCompile Include="src\Interface\UIGenMDMDeviceSelector.cpp" />
+    <ClCompile Include="src\Interface\UIGenMDMPortSpinner.cpp" />
     <ClCompile Include="src\Interface\UIMegaMidiPanel.cpp" />
     <ClCompile Include="src\Interface\UIMegaMidiPortSpinner.cpp" />
     <ClCompile Include="src\Interface\UIMidiChannel.cpp" />
@@ -154,6 +157,7 @@
     <ClInclude Include="..\VSTGui\src\vstgui\plugin-bindings\plugguieditor.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\base\VSTBase.h" />
+    <ClInclude Include="src\base\WinMidiOutput.h" />
     <ClInclude Include="src\Genny2612.h" />
     <ClInclude Include="src\GennyData.h" />
     <ClInclude Include="src\GennyExtParam.h" />
@@ -195,6 +199,8 @@
     <ClInclude Include="src\Interface\UIInstrument.h" />
     <ClInclude Include="src\Interface\UIKnob.h" />
     <ClInclude Include="src\Interface\UILetterDisplay.h" />
+    <ClInclude Include="src\Interface\UIGenMDMDeviceSelector.h" />
+    <ClInclude Include="src\Interface\UIGenMDMPortSpinner.h" />
     <ClInclude Include="src\Interface\UIMegaMidiPanel.h" />
     <ClInclude Include="src\Interface\UIMegaMidiPortSpinner.h" />
     <ClInclude Include="src\Interface\UIMidiChannel.h" />
@@ -627,7 +633,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\VSTGui\bin\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>VSTGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>VSTGui.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)src/vstplug.def</ModuleDefinitionFile>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
@@ -651,7 +657,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\VSTGui\bin\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)src/vstplug.def</ModuleDefinitionFile>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
@@ -674,7 +680,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\VSTGui\bin\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)src/vstplug.def</ModuleDefinitionFile>
       <SubSystem>Console</SubSystem>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
@@ -698,7 +704,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\VSTGui\bin\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>VSTGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>VSTGui.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)src/flplug.def</ModuleDefinitionFile>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
@@ -725,7 +731,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\VSTGui\bin\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)src/flplug.def</ModuleDefinitionFile>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
@@ -749,7 +755,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)\VSTGui\bin\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)src/flplug.def</ModuleDefinitionFile>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
@@ -775,7 +781,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)\VSTGui\bin\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)src/vstplug.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
@@ -797,7 +803,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)\VSTGui\bin\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)src/flplug.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
@@ -822,7 +828,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)\VSTGui\bin\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)src/vstplug.def</ModuleDefinitionFile>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -849,7 +855,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)\VSTGui\bin\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)src/vstplug.def</ModuleDefinitionFile>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
@@ -873,7 +879,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)VSTGui\bin\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)src/flplug.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
@@ -896,7 +902,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(SolutionDir)VSTGui\bin\$(Configuration)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)src/flplug.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>

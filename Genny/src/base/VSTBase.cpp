@@ -350,7 +350,7 @@ VstInt32 VSTBase::getNumMidiInputChannels()
 
 VstInt32 VSTBase::getNumMidiOutputChannels()
 {
-	return 0;
+	return 16;
 }
 
 VstInt32 VSTBase::getMidiProgramName (VstInt32 channel, MidiProgramName* mpn)
@@ -447,6 +447,10 @@ VstInt32 VSTBase::canDo (char* text)
 	if (!strcmp (text, "receiveVstMidiEvent"))
 		return 1;
 	if (!strcmp (text, "midiProgramNames"))
+		return 1;
+	if (!strcmp (text, "sendVstEvents"))
+		return 1;
+	if (!strcmp (text, "sendVstMidiEvent"))
 		return 1;
 
 	return -1;	// explicitly can't do; 0 => don't know
